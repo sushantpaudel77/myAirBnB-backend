@@ -29,6 +29,7 @@ public class RoomAdminController {
         return ResponseEntity.ok(allRoomsInHotel);
     }
 
+    // public
     @GetMapping(path = "/{roomId}")
     public ResponseEntity<RoomDto> getAllRoomsById(@PathVariable Long hotelId,
                                                    @PathVariable Long roomId) {

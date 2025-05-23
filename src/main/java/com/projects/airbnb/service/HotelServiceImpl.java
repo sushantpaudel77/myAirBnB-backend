@@ -5,15 +5,17 @@ import com.projects.airbnb.dto.HotelInfoDto;
 import com.projects.airbnb.dto.RoomDto;
 import com.projects.airbnb.entity.Hotel;
 import com.projects.airbnb.entity.Room;
+import com.projects.airbnb.entity.User;
 import com.projects.airbnb.exception.ResourceNotFoundException;
+import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,9 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = modelMapper.map(hotelDto, Hotel.class);
         hotel.setIsActive(false);
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        hotel.setOwner(user);
+
         hotel = hotelRepository.save(hotel);
 
         log.info("Created a new hotel with ID: {}", hotel.getId());
@@ -50,12 +55,23 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException
                         ("Hotel not found with ID: " + id));
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(hotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + id);
+        }
         return modelMapper.map(hotel, HotelDto.class);
     }
 
     @Override
     public HotelDto updateHotelById(Long hotelId, HotelDto updatedHotel) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+        }
 
         // Map new values over the existing object
         modelMapper.map(updatedHotel, existingHotel);
@@ -71,6 +87,12 @@ public class HotelServiceImpl implements HotelService {
     public void deleteHotelById(Long hotelId) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+        }
+
         for (Room room : existingHotel.getRooms()) {
             inventoryService.deleteAllInventories(room);
             roomRepository.deleteById(room.getId());
@@ -85,6 +107,12 @@ public class HotelServiceImpl implements HotelService {
         log.info("Activating the hotel with ID: {}", hotelId);
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+        }
+
         existingHotel.setIsActive(true);
 
         // assuming only do it once
@@ -93,6 +121,7 @@ public class HotelServiceImpl implements HotelService {
         }
     }
 
+    // public
     @Override
     public HotelInfoDto getHotelInfoById(Long hotelId) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());

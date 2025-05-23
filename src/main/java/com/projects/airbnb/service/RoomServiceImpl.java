@@ -3,12 +3,15 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.dto.RoomDto;
 import com.projects.airbnb.entity.Hotel;
 import com.projects.airbnb.entity.Room;
+import com.projects.airbnb.entity.User;
+import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
 import com.projects.airbnb.utility.EntityFinder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,12 @@ public class RoomServiceImpl implements RoomService {
 
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
 
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+        }
+
         Room room = modelMapper.map(roomDto, Room.class);
         room.setHotel(existingHotel);
 
@@ -49,6 +58,12 @@ public class RoomServiceImpl implements RoomService {
         log.info("Getting all rooms in hotel with the ID: {}", hotelId);
 
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+        }
 
         return existingHotel.getRooms()
                 .stream()
@@ -68,6 +83,13 @@ public class RoomServiceImpl implements RoomService {
     public void deleteRoomById(Long roomId) {
         log.info("Deleting the room ID: {}", roomId);
         Room existingRoom = entityFinder.findByIdOrThrow(roomRepository, roomId, "Room");
+
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!user.equals(existingRoom.getHotel().getOwner())) {
+            throw new UnAuthorizedException("This user does not own this room with ID: "  + roomId);
+        }
+
         inventoryService.deleteAllInventories(existingRoom);
         roomRepository.deleteById(roomId);
     }

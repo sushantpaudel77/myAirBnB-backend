@@ -5,12 +5,14 @@ import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
 import com.projects.airbnb.entity.*;
 import com.projects.airbnb.entity.enums.BookingStatus;
+import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.*;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +58,7 @@ public class BookingServiceImpl implements BookingService {
                 bookingRequest.getCheckOutDate(),
                 bookingRequest.getRoomsCount());
 
-        long daysCount = ChronoUnit.DAYS.between(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate()) + 1;
+//        long daysCount = ChronoUnit.DAYS.between(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate()) + 1;
 
 /*
         if (inventoryList.size() != daysCount) {
@@ -104,13 +106,18 @@ public class BookingServiceImpl implements BookingService {
         log.info("Adding guests for booking with id: {}", bookingId);
         Booking booking = entityFinder.findByIdOrThrow(bookingRepository, bookingId, HotelField.HOTEL.getKey());
 
-        if (hasBookingHasExpired(booking)) {
-            throw new IllegalArgumentException("Booking has already expired");
+        User user = getCurrentUser();
+        if (!user.equals(booking.getUser())) {
+            throw new UnAuthorizedException("Bookings does not belong to this user with ID: " + user.getId());
         }
+
+            if (hasBookingHasExpired(booking)) {
+                throw new IllegalArgumentException("Booking has already expired");
+            }
 
         for (GuestDto guestDto : guestDtoList) {
             Guest guest = modelMapper.map(guestDto, Guest.class);
-            guest.setUser(getCurrentUser());
+            guest.setUser(user);
             guest = guestRepository.save(guest);
             booking.getGuests().add(guest);
         }
@@ -126,8 +133,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     public User getCurrentUser() {
-        User user = new User();
-        user.setId(1L);
-        return user;
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

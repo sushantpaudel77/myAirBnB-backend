@@ -2,11 +2,15 @@ package com.projects.airbnb.advice;
 
 import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UsernameNotFoundException;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintDeclarationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -15,6 +19,36 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleResourceNotFound(ResourceNotFoundException exception) {
         ApiError apiError = ApiError.builder()
                 .httpStatus(HttpStatus.NOT_FOUND)
+                .message(exception.getMessage())
+                .build();
+
+        return buildErrorResponse(apiError);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<?>> handleResourceNotFound(AuthenticationException exception) {
+        ApiError apiError = ApiError.builder()
+                .httpStatus(HttpStatus.UNAUTHORIZED)
+                .message(exception.getMessage())
+                .build();
+
+        return buildErrorResponse(apiError);
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiResponse<?>> handleResourceNotFound(JwtException exception) {
+        ApiError apiError = ApiError.builder()
+                .httpStatus(HttpStatus.UNAUTHORIZED)
+                .message(exception.getMessage())
+                .build();
+
+        return buildErrorResponse(apiError);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleResourceNotFound(AccessDeniedException exception) {
+        ApiError apiError = ApiError.builder()
+                .httpStatus(HttpStatus.FORBIDDEN)
                 .message(exception.getMessage())
                 .build();
 

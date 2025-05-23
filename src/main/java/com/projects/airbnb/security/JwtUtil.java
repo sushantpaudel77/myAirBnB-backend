@@ -28,8 +28,6 @@ public class JwtUtil {
     @Value("${jwt.refresh-expiration}")
     private Long refreshExpiration;
 
-    private final UserDetailsService userDetailsService;
-
     private SecretKey getSigningKey() {
         byte[] decode = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(decode);
