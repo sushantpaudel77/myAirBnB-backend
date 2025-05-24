@@ -51,7 +51,7 @@ public class Booking {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus bookingStatus;
 

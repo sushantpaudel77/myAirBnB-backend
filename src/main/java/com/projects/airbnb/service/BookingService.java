@@ -16,4 +16,8 @@ public interface BookingService {
     String initiatePayment(Long bookingId);
 
     void capturePayment(Event event);
+
+    void cancelBooking(Long bookingId);
+
+    String getBookingStatus(Long bookingId);
 }

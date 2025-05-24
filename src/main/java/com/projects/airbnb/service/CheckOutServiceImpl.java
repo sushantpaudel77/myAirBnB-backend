@@ -30,7 +30,7 @@ public class CheckOutServiceImpl implements CheckOutService {
         log.info("Creating session for booking with ID: {}", booking.getId());
         // Validate minimum amount
         if (booking.getAmount().compareTo(MINIMUM_AMOUNT) < 0) {
-            throw new IllegalArgumentException("Booking amount must be at least ₹" + MINIMUM_AMOUNT);
+            throw new IllegalArgumentException("Booking amount must be at least" + MINIMUM_AMOUNT);
         }
 
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

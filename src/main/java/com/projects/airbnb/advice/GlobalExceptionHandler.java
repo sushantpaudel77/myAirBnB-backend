@@ -1,6 +1,7 @@
 package com.projects.airbnb.advice;
 
 import com.projects.airbnb.exception.ResourceNotFoundException;
+import com.projects.airbnb.exception.RoomUnavailableException;
 import com.projects.airbnb.exception.UsernameNotFoundException;
 import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintDeclarationException;
@@ -64,6 +65,18 @@ public class GlobalExceptionHandler {
         
         return buildErrorResponse(apiError);
     }
+
+
+    @ExceptionHandler(RoomUnavailableException.class)
+    public ResponseEntity<ApiResponse<?>> handleResourceNotFound(RoomUnavailableException exception) {
+        ApiError apiError = ApiError.builder()
+                .httpStatus(HttpStatus.CONFLICT)
+                .message(exception.getMessage())
+                .build();
+
+        return buildErrorResponse(apiError);
+    }
+
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleUsernameNotFound(UsernameNotFoundException exception) {
