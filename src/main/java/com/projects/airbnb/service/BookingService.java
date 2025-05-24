@@ -3,6 +3,7 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
+import com.stripe.model.Event;
 
 import java.util.List;
 
@@ -11,4 +12,8 @@ public interface BookingService {
     BookingDto initializeBooking(BookingRequest bookingRequest);
 
     BookingDto addGuests(Long bookingId, List<GuestDto> guestDto);
+
+    String initiatePayment(Long bookingId);
+
+    void capturePayment(Event event);
 }

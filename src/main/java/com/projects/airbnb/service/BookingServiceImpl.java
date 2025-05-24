@@ -5,13 +5,16 @@ import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
 import com.projects.airbnb.entity.*;
 import com.projects.airbnb.entity.enums.BookingStatus;
+import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.*;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
+import com.stripe.model.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +36,13 @@ public class BookingServiceImpl implements BookingService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
     private final GuestRepository guestRepository;
+    private final CheckOutService checkOutService;
 
-    @Override
+    @Value("${frontend.url}")
+    private String frontendUrl;
+
     @Transactional
+    @Override
     public BookingDto initializeBooking(BookingRequest bookingRequest) {
 
         log.info("Initializing booking for hotel : {}, room: {}, date {}-{}",
@@ -52,31 +59,21 @@ public class BookingServiceImpl implements BookingService {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, bookingRequest.getHotelId(), HotelField.HOTEL.getKey());
         Room existingRoom = entityFinder.findByIdOrThrow(roomRepository, bookingRequest.getRoomId(), HotelField.ROOM.getKey());
 
+        long numberOfNights = ChronoUnit.DAYS.between(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate());
+        if (numberOfNights < 1) {
+            throw new IllegalArgumentException("Minimum booking duration is 1 night");
+        }
+
+        BigDecimal totalAmount = calculateTotalAmount(existingRoom.getBasePrice(),
+                bookingRequest.getRoomsCount(),
+                numberOfNights);
+
+
         List<Inventory> inventoryList = inventoryRepository.findAndLockAvailableInventory(
                 existingHotel.getId(),
                 bookingRequest.getCheckInDate(),
                 bookingRequest.getCheckOutDate(),
                 bookingRequest.getRoomsCount());
-
-//        long daysCount = ChronoUnit.DAYS.between(bookingRequest.getCheckInDate(), bookingRequest.getCheckOutDate()) + 1;
-
-/*
-        if (inventoryList.size() != daysCount) {
-            String message = String.format("Room is not available for the entire stay period. Available for %d out of %d days",
-                    inventoryList.size(), daysCount);
-            throw new IllegalStateException(message);
-        }
-
-//         check if each inventory has enough spaces
-        for (Inventory inventory : inventoryList) {
-            int availableRooms = inventory.getTotalCount() - inventory.getBookedCount();
-            if (availableRooms < bookingRequest.getRoomsCount()) {
-                String message = String.format("Not enough rooms available on %s, Available: %d, Requested: %d",
-                        inventory.getDate(), availableRooms, bookingRequest.getRoomsCount());
-                throw new IllegalArgumentException(message);
-            }
-        }
-*/
 
         // Reserve the room/update the booked count of inventories
         for (Inventory inventory : inventoryList) {
@@ -94,26 +91,39 @@ public class BookingServiceImpl implements BookingService {
                 .checkOutDate(bookingRequest.getCheckOutDate())
                 .user(getCurrentUser())
                 .roomsCount(bookingRequest.getRoomsCount())
-                .amount(BigDecimal.TEN)
+                .amount(totalAmount)
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);
         return modelMapper.map(savedBooking, BookingDto.class);
     }
 
+    private BigDecimal calculateTotalAmount(BigDecimal roomPrice, int roomsCount, long numberOfNights) {
+        // Ensure minimum amount meets Stripe's requirement (50 INR = ~0.60 USD)
+        BigDecimal baseAmount = roomPrice
+                .multiply(BigDecimal.valueOf(roomsCount))
+                .multiply(BigDecimal.valueOf(numberOfNights));
+
+        // Minimum amount validation (50 INR)
+        return baseAmount.max(BigDecimal.valueOf(50));
+    }
+
+
+    @Transactional
     @Override
     public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtoList) {
         log.info("Adding guests for booking with id: {}", bookingId);
         Booking booking = entityFinder.findByIdOrThrow(bookingRepository, bookingId, HotelField.HOTEL.getKey());
 
         User user = getCurrentUser();
+
         if (!user.equals(booking.getUser())) {
             throw new UnAuthorizedException("Bookings does not belong to this user with ID: " + user.getId());
         }
 
-            if (hasBookingHasExpired(booking)) {
-                throw new IllegalArgumentException("Booking has already expired");
-            }
+        if (hasBookingHasExpired(booking)) {
+            throw new IllegalArgumentException("Booking has already expired");
+        }
 
         for (GuestDto guestDto : guestDtoList) {
             Guest guest = modelMapper.map(guestDto, Guest.class);
@@ -126,6 +136,40 @@ public class BookingServiceImpl implements BookingService {
         Booking save = bookingRepository.save(booking);
         return modelMapper.map(save, BookingDto.class);
 
+    }
+
+    @Transactional
+    @Override
+    public String initiatePayment(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() ->
+                new ResourceNotFoundException("Booking not found with ID: " + bookingId));
+
+        User user = getCurrentUser();
+
+        if (!user.equals(booking.getUser())) {
+            throw new UnAuthorizedException("Bookings does not belong to this user with ID: " + user.getId());
+        }
+        if (hasBookingHasExpired(booking)) {
+            throw new IllegalArgumentException("Booking has already expired");
+        }
+        String checkOutSession = checkOutService.getCheckOutSession(booking,
+                frontendUrl + "/payments/success",
+                frontendUrl + "/payments/failure");
+
+        booking.setBookingStatus(BookingStatus.PAYMENTS_PENDING);
+        bookingRepository.save(booking);
+
+        return checkOutSession;
+    }
+
+    @Transactional
+    @Override
+    public void capturePayment(Event event) {
+        if ("checkout.session.completed".equals(event.getType())) {
+
+        } else {
+         log.warn("unhandled event type: {}", event.getType());
+        }
     }
 
     public boolean hasBookingHasExpired(Booking booking) {

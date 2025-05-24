@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -29,11 +30,9 @@ public class AuthService {
 
     public UserDto signUp(SignUpRequestDto signUpRequestDto) {
 
-        User user = userRepository.findByEmail(signUpRequestDto.getEmail()).orElse(null);
-
-        if (user != null) {
+        userRepository.findByEmail(signUpRequestDto.getEmail()).ifPresent(user -> {
             throw new ResourceAlreadyExistsException("User is already present with the same email");
-        }
+        });
 
         User newUser = modelMapper.map(signUpRequestDto, User.class);
         newUser.setRoles(Set.of(Role.GUEST));
@@ -45,17 +44,27 @@ public class AuthService {
     }
 
     public String[] login(LoginDto loginDto) {
-        Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginDto.getEmail(),
-                loginDto.getPassword()
-        ));
+        Authentication authenticate = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginDto.getEmail(),
+                        loginDto.getPassword()
+                )
+        );
 
         User user = (User) authenticate.getPrincipal();
 
-        String[] arr = new String[2];
-        arr[0] = jwtUtil.buildToken(user);
-        arr[1] = jwtUtil.generateRefreshToken(user);
+        return new String[]{
+                jwtUtil.buildToken(user),
+                jwtUtil.generateRefreshToken(user)
+        };
+    }
 
-        return arr;
+    public String refreshToken(String refreshToken) {
+        Long id = jwtUtil.getUserIdFromToken(refreshToken);
+
+        User user = userRepository.findById(id).orElseThrow(() ->
+                new UsernameNotFoundException("User not found with ID: " + id));
+
+        return jwtUtil.generateRefreshToken(user);
     }
 }
