@@ -25,7 +25,9 @@ public interface BookingService {
 
     String getBookingStatus(Long bookingId);
 
-    List<BookingDto> getAllBookingByHotelId(Long hotelId) throws AccessDeniedException;
+    List<BookingDto> getAllBookingByHotelId(Long hotelId);
 
     HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate);
+
+    List<BookingDto> getMyBookings();
 }

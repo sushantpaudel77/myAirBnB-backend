@@ -12,6 +12,7 @@ import com.projects.airbnb.exception.RoomUnavailableException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.*;
 import com.projects.airbnb.strategy.PricingService;
+import com.projects.airbnb.utility.AppUtils;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
 import com.stripe.exception.StripeException;
@@ -226,7 +227,7 @@ public class BookingServiceImpl implements BookingService {
                     return new ResourceNotFoundException(errorMessage);
                 });
 
-        User user = getCurrentUser();
+        User user = AppUtils.getCurrentUser();
 
         if (!user.equals(booking.getUser())) {
             throw new UnAuthorizedException("Booking does not belong to this user with ID: " + user.getId());
@@ -285,14 +286,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllBookingByHotelId(Long hotelId) throws AccessDeniedException {
+    public List<BookingDto> getAllBookingByHotelId(Long hotelId)  {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
 
         User user = getCurrentUser();
 
         log.info("getting all bookings for the hotel with ID: {}", hotelId);
         if (!user.equals(existingHotel.getOwner())) {
-            throw new AccessDeniedException("You are not the owner of hotel with ID: " + hotelId);
+            throw new org.springframework.security.access.AccessDeniedException("You are not the owner of hotel with ID: " + hotelId);
         }
 
         List<Booking> bookings = bookingRepository.findByHotel(existingHotel);
@@ -306,7 +307,7 @@ public class BookingServiceImpl implements BookingService {
     public HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
 
-        User user = getCurrentUser();
+        User user = AppUtils.getCurrentUser();
 
         log.info("Generating report for hotel with ID: {}", hotelId);
         if (!user.equals(existingHotel.getOwner())) {
@@ -332,6 +333,17 @@ public class BookingServiceImpl implements BookingService {
                 : totalRevenueOfConfirmedBookings.divide(BigDecimal.valueOf(totalConfirmedBookings), RoundingMode.HALF_DOWN);
 
         return new HotelReportDto(totalConfirmedBookings, totalRevenueOfConfirmedBookings, avgRevenue);
+    }
+
+    @Override
+    public List<BookingDto> getMyBookings() {
+        User user = AppUtils.getCurrentUser();
+
+
+        return bookingRepository.findByUser(user)
+                .stream()
+                .map(element -> modelMapper.map(element, BookingDto.class))
+                .toList();
     }
 
 

@@ -3,6 +3,7 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.dto.HotelPriceDto;
 import com.projects.airbnb.dto.HotelSearchRequest;
 import com.projects.airbnb.dto.InventoryDto;
+import com.projects.airbnb.dto.UpdateInventoryRequestDto;
 import com.projects.airbnb.entity.Inventory;
 import com.projects.airbnb.entity.Room;
 import com.projects.airbnb.entity.User;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -85,6 +87,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
+        log.info("Getting All inventory by room for room with ID: {}", roomId);
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomId));
 
@@ -97,5 +100,30 @@ public class InventoryServiceImpl implements InventoryService {
                 .stream()
                 .map(element -> modelMapper.map(element, InventoryDto.class))
                 .toList();
+    }
+
+    @Transactional
+    @Override
+    public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
+        log.info("Updating All inventory by room for ID: {} between data range: {} - {}",
+                roomId, updateInventoryRequestDto.getStartDate(), updateInventoryRequestDto.getEndDate());
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomId));
+
+        User user = getCurrentUser();
+        if (!user.equals(room.getHotel().getOwner())) {
+            throw new AccessDeniedException("You are not the owner of room with ID: " + roomId);
+        }
+
+        inventoryRepository.getInventoryAndLockBeforeUpdate(roomId,
+                updateInventoryRequestDto.getStartDate(),
+                updateInventoryRequestDto.getEndDate());
+
+        inventoryRepository.updateInventory(roomId,
+                updateInventoryRequestDto.getStartDate(),
+                updateInventoryRequestDto.getEndDate(),
+                updateInventoryRequestDto.getClosed(),
+                updateInventoryRequestDto.getSurgeFactor());
     }
 }

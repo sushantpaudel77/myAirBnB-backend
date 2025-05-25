@@ -10,6 +10,7 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
+import com.projects.airbnb.utility.AppUtils;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +44,8 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = modelMapper.map(hotelDto, Hotel.class);
         hotel.setIsActive(false);
 
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        hotel.setOwner(user);
+        User currentUser = AppUtils.getCurrentUser();
+        hotel.setOwner(currentUser);
 
         hotel = hotelRepository.save(hotel);
 
@@ -58,10 +59,10 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException
                         ("Hotel not found with ID: " + id));
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = AppUtils.getCurrentUser();
 
-        if (!user.equals(hotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: " + id);
+        if (!currentUser.equals(hotel.getOwner())) {
+            throw new UnAuthorizedException("This currentUser does not own this hotel with ID: " + id);
         }
         return modelMapper.map(hotel, HotelDto.class);
     }
@@ -70,7 +71,7 @@ public class HotelServiceImpl implements HotelService {
     public HotelDto updateHotelById(Long hotelId, HotelDto updatedHotel) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
 
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = AppUtils.getCurrentUser();
 
         if (!user.equals(existingHotel.getOwner())) {
             throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
@@ -90,7 +91,7 @@ public class HotelServiceImpl implements HotelService {
     public void deleteHotelById(Long hotelId) {
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
 
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = AppUtils.getCurrentUser();
 
         if (!user.equals(existingHotel.getOwner())) {
             throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
@@ -110,7 +111,7 @@ public class HotelServiceImpl implements HotelService {
         log.info("Activating the hotel with ID: {}", hotelId);
         Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
 
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User user = AppUtils.getCurrentUser();
 
         if (!user.equals(existingHotel.getOwner())) {
             throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);

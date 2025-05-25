@@ -22,7 +22,7 @@ import java.util.List;
 public class HotelController {
 
     private final HotelService hotelService;
-    private BookingService bookingService;
+    private final BookingService bookingService;
 
     @PostMapping
     public ResponseEntity<HotelDto> createNewHotel(@RequestBody HotelDto hotelDto) {
@@ -63,7 +63,7 @@ public class HotelController {
     }
 
     @GetMapping("/{hotelId}/bookings")
-    public ResponseEntity<List<BookingDto>> getAllBookingByHotelId(@PathVariable Long hotelId) throws AccessDeniedException {
+    public ResponseEntity<List<BookingDto>> getAllBookingByHotelId(@PathVariable Long hotelId)  {
         List<BookingDto> bookingDto = bookingService.getAllBookingByHotelId(hotelId);
         return ResponseEntity.ok(bookingDto);
     }

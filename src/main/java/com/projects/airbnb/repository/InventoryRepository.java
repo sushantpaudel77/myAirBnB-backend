@@ -4,7 +4,6 @@ import com.projects.airbnb.entity.Hotel;
 import com.projects.airbnb.entity.Inventory;
 import com.projects.airbnb.entity.Room;
 import jakarta.persistence.LockModeType;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -72,7 +72,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                                                  @Param("endDate") LocalDate endDate,
                                                  @Param("numberOfRooms") int numberOfRooms);
 
-
     @Modifying
     @Query("""
             UPDATE Inventory i
@@ -120,4 +119,30 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     List<Inventory> findByHotelAndDateBetween(Hotel hotel, LocalDate startDate, LocalDate endDate);
 
     List<Inventory> findByRoomOrderByRoom(Room room);
+
+    @Query("""
+            SELECT i
+            FROM Inventory i
+            WHERE i.room.id = :roomId
+                AND i.date BETWEEN :startDate AND :endDate
+            """)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    void getInventoryAndLockBeforeUpdate(@Param("roomId") Long roomId,
+                                         @Param("startDate") LocalDate startDate,
+                                         @Param("endDate") LocalDate endDate);
+
+    @Modifying
+    @Query("""
+            UPDATE Inventory i
+            SET i.surgeFactor = :surgeFactor,
+                i.closed = :closed
+            WHERE i.room.id = :roomId
+                AND i.date BETWEEN :startDate AND :endDate
+            """)
+    void updateInventory(@Param("roomId") Long roomId,
+                         @Param("startDate") LocalDate startDate,
+                         @Param("endDate") LocalDate endDate,
+                         @Param("closed") boolean closed,
+                         @Param("surgeFactor") BigDecimal surgeFactor);
+
 }

@@ -7,6 +7,7 @@ import io.jsonwebtoken.JwtException;
 import jakarta.validation.ConstraintDeclarationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -77,6 +78,15 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(apiError);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<?>> handleMethodNotAllowed(HttpRequestMethodNotSupportedException exception) {
+        ApiError apiError = ApiError.builder()
+                .httpStatus(HttpStatus.METHOD_NOT_ALLOWED)
+                .message("Request method '" + exception.getMethod() + "' is not supported")
+                .build();
+
+        return buildErrorResponse(apiError);
+    }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleUsernameNotFound(UsernameNotFoundException exception) {
