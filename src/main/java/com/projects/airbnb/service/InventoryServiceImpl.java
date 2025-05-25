@@ -11,6 +11,7 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.repository.HotelMinPriceRepository;
 import com.projects.airbnb.repository.InventoryRepository;
 import com.projects.airbnb.repository.RoomRepository;
+import com.projects.airbnb.utility.AppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -91,8 +92,8 @@ public class InventoryServiceImpl implements InventoryService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomId));
 
-        User user = getCurrentUser();
-        if (!user.equals(room.getHotel().getOwner())) {
+        User currentUser = AppUtils.getCurrentUser();
+        if (!currentUser.equals(room.getHotel().getOwner())) {
             throw new AccessDeniedException("You are not the owner of room with ID: " + roomId);
         }
 
@@ -105,25 +106,45 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     @Override
     public void updateInventory(Long roomId, UpdateInventoryRequestDto updateInventoryRequestDto) {
-        log.info("Updating All inventory by room for ID: {} between data range: {} - {}",
+        log.info("[START] Updating inventory for Room ID: {} | Date Range: {} to {}",
                 roomId, updateInventoryRequestDto.getStartDate(), updateInventoryRequestDto.getEndDate());
 
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomId));
+                .orElseThrow(() -> {
+                    log.warn("[ROOM NOT FOUND] Room ID: {}", roomId);
+                    return new ResourceNotFoundException("Room not found with ID: " + roomId);
+                });
 
-        User user = getCurrentUser();
-        if (!user.equals(room.getHotel().getOwner())) {
+        User currentUser = AppUtils.getCurrentUser();
+        log.debug("Current currentUser ID: {} attempting to update Room ID: {} owned by User ID: {}",
+                currentUser.getId(), roomId, room.getHotel().getOwner().getId());
+
+        if (!currentUser.equals(room.getHotel().getOwner())) {
+            log.error("[ACCESS DENIED] User ID: {} is not the owner of Room ID: {}", currentUser.getId(), roomId);
             throw new AccessDeniedException("You are not the owner of room with ID: " + roomId);
         }
 
-        inventoryRepository.getInventoryAndLockBeforeUpdate(roomId,
+        log.info("[LOCKING] Attempting to lock inventory records for update...");
+        inventoryRepository.getInventoryAndLockBeforeUpdate(
+                roomId,
                 updateInventoryRequestDto.getStartDate(),
-                updateInventoryRequestDto.getEndDate());
+                updateInventoryRequestDto.getEndDate()
+        );
+        log.info("[LOCK ACQUIRED] Locked inventory records for Room ID: {} from {} to {}",
+                roomId, updateInventoryRequestDto.getStartDate(), updateInventoryRequestDto.getEndDate());
 
-        inventoryRepository.updateInventory(roomId,
+        log.info("[UPDATING INVENTORY] Setting closed: {}, surgeFactor: {}",
+                updateInventoryRequestDto.getClosed(), updateInventoryRequestDto.getSurgeFactor());
+
+        inventoryRepository.updateInventory(
+                roomId,
                 updateInventoryRequestDto.getStartDate(),
                 updateInventoryRequestDto.getEndDate(),
                 updateInventoryRequestDto.getClosed(),
-                updateInventoryRequestDto.getSurgeFactor());
+                updateInventoryRequestDto.getSurgeFactor()
+        );
+
+        log.info("[SUCCESS] Inventory updated successfully for Room ID: {}", roomId);
     }
+
 }

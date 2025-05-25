@@ -4,6 +4,7 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.RoomUnavailableException;
 import com.projects.airbnb.exception.UsernameNotFoundException;
 import io.jsonwebtoken.JwtException;
+import jakarta.persistence.NonUniqueResultException;
 import jakarta.validation.ConstraintDeclarationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
+import java.util.Collections;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -67,7 +69,6 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(apiError);
     }
 
-
     @ExceptionHandler(RoomUnavailableException.class)
     public ResponseEntity<ApiResponse<?>> handleResourceNotFound(RoomUnavailableException exception) {
         ApiError apiError = ApiError.builder()
@@ -96,6 +97,17 @@ public class GlobalExceptionHandler {
                 .build();
 
         return buildErrorResponse(apiError);
+    }
+
+    @ExceptionHandler(NonUniqueResultException.class)
+    public ResponseEntity<ApiResponse<?>> handleNonUniqueResult(NonUniqueResultException ex) {
+        ApiError error = ApiError.builder()
+                .httpStatus(HttpStatus.CONFLICT)
+                .message("Expected a single result, but multiple records were found")
+                .subError(Collections.singletonList("Consider using getResultList() instead of getSingleResult() if multiple are valid"))
+                .build();
+
+        return buildErrorResponse(error);
     }
 
     @ExceptionHandler(Exception.class)

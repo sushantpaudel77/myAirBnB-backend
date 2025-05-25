@@ -37,9 +37,8 @@ public class WebSecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/**").hasRole("HOTEL_MANAGER")
-                        .requestMatchers(
-                                "/bookings/**"
-                        ).authenticated()
+                        .requestMatchers("/api/v1/bookings/**", "/api/v1/users/**").authenticated()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(ex -> ex

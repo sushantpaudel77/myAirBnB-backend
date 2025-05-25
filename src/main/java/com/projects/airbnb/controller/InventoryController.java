@@ -22,7 +22,7 @@ public class InventoryController {
         return ResponseEntity.ok(allInventoryByRoom);
     }
 
-    @PatchMapping("/rooms/{roomId}")
+    @PutMapping("/rooms/{roomId}")
     public ResponseEntity<Void> updateInventory(@PathVariable Long roomId,
                                                 @RequestBody UpdateInventoryRequestDto updateInventoryRequestDto) {
         inventoryService.updateInventory(roomId, updateInventoryRequestDto);

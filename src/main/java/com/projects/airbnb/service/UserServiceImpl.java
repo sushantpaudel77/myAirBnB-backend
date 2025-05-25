@@ -1,9 +1,12 @@
 package com.projects.airbnb.service;
 
 import com.projects.airbnb.dto.ProfileUpdateRequestDto;
+import com.projects.airbnb.dto.UserDto;
 import com.projects.airbnb.entity.User;
 import com.projects.airbnb.repository.UserRepository;
+import com.projects.airbnb.utility.AppUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import static com.projects.airbnb.utility.AppUtils.getCurrentUser;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -35,6 +39,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (profileUpdateRequestDto.getName() != null) user.setName(profileUpdateRequestDto.getName());
 
         userRepository.save(user);
+    }
+
+    @Override
+    public UserDto getMyProfile() {
+        User user = getCurrentUser();
+        log.info("Fetching profile for current user profile with the ID: {}", user.getId());
+        return modelMapper.map(getCurrentUser(), UserDto.class);
     }
 
     @Override

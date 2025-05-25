@@ -2,6 +2,7 @@ package com.projects.airbnb.controller;
 
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.ProfileUpdateRequestDto;
+import com.projects.airbnb.dto.UserDto;
 import com.projects.airbnb.service.BookingService;
 import com.projects.airbnb.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -18,15 +19,21 @@ public class UserController {
     private final UserService userService;
     private final BookingService bookingService;
 
-    @PutMapping("/profile")
+    @PatchMapping("/profile")
     public ResponseEntity<Void> updateProfile(@RequestBody ProfileUpdateRequestDto profileUpdateRequestDto) {
         userService.updateProfile(profileUpdateRequestDto);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/myBookings")
-    public ResponseEntity<List<BookingDto>> getMyBookings() {
+    public ResponseEntity<List<BookingDto>> getBookingsForCurrentUser() {
+        List<BookingDto> userBookings = bookingService.getMyBookings();
+        return ResponseEntity.ok(userBookings);
+    }
 
-        return ResponseEntity.ok(bookingService.getMyBookings());
+    @GetMapping("/profile")
+    public ResponseEntity<UserDto> getCurrentUserProfile() {
+        UserDto userProfile = userService.getMyProfile();
+        return ResponseEntity.ok(userProfile);
     }
 }
