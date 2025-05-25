@@ -2,21 +2,29 @@ package com.projects.airbnb.service;
 
 import com.projects.airbnb.dto.HotelPriceDto;
 import com.projects.airbnb.dto.HotelSearchRequest;
+import com.projects.airbnb.dto.InventoryDto;
 import com.projects.airbnb.entity.Inventory;
 import com.projects.airbnb.entity.Room;
+import com.projects.airbnb.entity.User;
+import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.repository.HotelMinPriceRepository;
 import com.projects.airbnb.repository.InventoryRepository;
+import com.projects.airbnb.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import static com.projects.airbnb.utility.AppUtils.getCurrentUser;
 
 @Slf4j
 @Service
@@ -26,6 +34,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final ModelMapper modelMapper;
     private final HotelMinPriceRepository hotelMinPriceRepository;
+    private final RoomRepository roomRepository;
 
     @Override
     public void initializeRoomForAYear(Room room) {
@@ -72,5 +81,21 @@ public class InventoryServiceImpl implements InventoryService {
                 hotelSearchRequest.getRoomsCount(),
                 dateCount,
                 pageable);
+    }
+
+    @Override
+    public List<InventoryDto> getAllInventoryByRoom(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomId));
+
+        User user = getCurrentUser();
+        if (!user.equals(room.getHotel().getOwner())) {
+            throw new AccessDeniedException("You are not the owner of room with ID: " + roomId);
+        }
+
+        return inventoryRepository.findByRoomOrderByRoom(room)
+                .stream()
+                .map(element -> modelMapper.map(element, InventoryDto.class))
+                .toList();
     }
 }

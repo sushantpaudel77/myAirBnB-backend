@@ -3,6 +3,7 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
+import com.projects.airbnb.dto.HotelReportDto;
 import com.projects.airbnb.entity.*;
 import com.projects.airbnb.entity.enums.BookingStatus;
 import com.projects.airbnb.exception.RefundProcessingException;
@@ -22,14 +23,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import static com.projects.airbnb.utility.AppUtils.getCurrentUser;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -225,6 +231,7 @@ public class BookingServiceImpl implements BookingService {
         if (!user.equals(booking.getUser())) {
             throw new UnAuthorizedException("Booking does not belong to this user with ID: " + user.getId());
         }
+
         if (booking.getBookingStatus() != BookingStatus.CONFIRMED) {
             throw new IllegalStateException("Only confirmed bookings can be cancelled");
         }
@@ -277,11 +284,58 @@ public class BookingServiceImpl implements BookingService {
         return booking.getBookingStatus().name();
     }
 
-    public boolean hasBookingHasExpired(Booking booking) {
-        return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
+    @Override
+    public List<BookingDto> getAllBookingByHotelId(Long hotelId) throws AccessDeniedException {
+        Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
+
+        User user = getCurrentUser();
+
+        log.info("getting all bookings for the hotel with ID: {}", hotelId);
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new AccessDeniedException("You are not the owner of hotel with ID: " + hotelId);
+        }
+
+        List<Booking> bookings = bookingRepository.findByHotel(existingHotel);
+
+        return bookings.stream()
+                .map(element -> modelMapper.map(element, BookingDto.class))
+                .toList();
     }
 
-    public User getCurrentUser() {
-        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    @Override
+    public HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate) {
+        Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, "Hotel");
+
+        User user = getCurrentUser();
+
+        log.info("Generating report for hotel with ID: {}", hotelId);
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new org.springframework.security.access.AccessDeniedException("You are not the owner of hotel with ID: " + hotelId);
+        }
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(LocalTime.MAX);
+
+        List<Booking> bookings = bookingRepository.findByHotelAndCreatedAtBetween(existingHotel, startDateTime, endDateTime);
+
+        long totalConfirmedBookings = bookings.stream()
+                .filter(booking -> booking.getBookingStatus() == BookingStatus.CONFIRMED)
+                .count();
+
+        BigDecimal totalRevenueOfConfirmedBookings = bookings.stream()
+                .filter(booking -> booking.getBookingStatus() == BookingStatus.CONFIRMED)
+                .map(Booking::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal avgRevenue = (totalConfirmedBookings == 0)
+                ? BigDecimal.ZERO
+                : totalRevenueOfConfirmedBookings.divide(BigDecimal.valueOf(totalConfirmedBookings), RoundingMode.HALF_DOWN);
+
+        return new HotelReportDto(totalConfirmedBookings, totalRevenueOfConfirmedBookings, avgRevenue);
+    }
+
+
+    public boolean hasBookingHasExpired(Booking booking) {
+        return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
     }
 }

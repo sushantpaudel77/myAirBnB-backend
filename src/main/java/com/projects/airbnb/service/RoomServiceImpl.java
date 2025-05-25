@@ -4,10 +4,12 @@ import com.projects.airbnb.dto.RoomDto;
 import com.projects.airbnb.entity.Hotel;
 import com.projects.airbnb.entity.Room;
 import com.projects.airbnb.entity.User;
+import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
 import com.projects.airbnb.utility.EntityFinder;
+import com.projects.airbnb.utility.HotelField;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.projects.airbnb.utility.AppUtils.getCurrentUser;
 
 @Slf4j
 @Service
@@ -38,7 +42,7 @@ public class RoomServiceImpl implements RoomService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingHotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
         }
 
         Room room = modelMapper.map(roomDto, Room.class);
@@ -62,7 +66,7 @@ public class RoomServiceImpl implements RoomService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingHotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
         }
 
         return existingHotel.getRooms()
@@ -87,10 +91,32 @@ public class RoomServiceImpl implements RoomService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingRoom.getHotel().getOwner())) {
-            throw new UnAuthorizedException("This user does not own this room with ID: "  + roomId);
+            throw new UnAuthorizedException("This user does not own this room with ID: " + roomId);
         }
 
         inventoryService.deleteAllInventories(existingRoom);
         roomRepository.deleteById(roomId);
+    }
+
+    @Transactional
+    @Override
+    public RoomDto updateRoomById(Long hotelId, Long roomId, RoomDto roomDto) {
+        log.info("Updating the room with ID: {}", roomId);
+        Hotel existingHotel = entityFinder.findByIdOrThrow(hotelRepository, hotelId, HotelField.HOTEL.getKey());
+
+        User user = getCurrentUser();
+
+        if (!user.equals(existingHotel.getOwner())) {
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
+        }
+        Room room = roomRepository.findById(roomId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Room not found with ID: " + roomDto));
+
+        modelMapper.map(roomDto, room);
+        room.setId(roomId);
+
+        room = roomRepository.save(room);
+
+        return modelMapper.map(room, RoomDto.class);
     }
 }

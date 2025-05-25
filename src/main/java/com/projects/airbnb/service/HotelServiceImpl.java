@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+
+import static com.projects.airbnb.utility.AppUtils.getCurrentUser;
 
 
 @Slf4j
@@ -58,7 +61,7 @@ public class HotelServiceImpl implements HotelService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(hotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + id);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + id);
         }
         return modelMapper.map(hotel, HotelDto.class);
     }
@@ -70,7 +73,7 @@ public class HotelServiceImpl implements HotelService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingHotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
         }
 
         // Map new values over the existing object
@@ -90,7 +93,7 @@ public class HotelServiceImpl implements HotelService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingHotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
         }
 
         for (Room room : existingHotel.getRooms()) {
@@ -110,7 +113,7 @@ public class HotelServiceImpl implements HotelService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (!user.equals(existingHotel.getOwner())) {
-            throw new UnAuthorizedException("This user does not own this hotel with ID: "  + hotelId);
+            throw new UnAuthorizedException("This user does not own this hotel with ID: " + hotelId);
         }
 
         existingHotel.setIsActive(true);
@@ -132,5 +135,16 @@ public class HotelServiceImpl implements HotelService {
                 .toList();
 
         return new HotelInfoDto(modelMapper.map(existingHotel, HotelDto.class), rooms);
+    }
+
+    @Override
+    public List<HotelDto> getAllHotels() {
+        User user = getCurrentUser();
+        log.info("getting all hotels for the admin user with ID: {}", user.getId());
+        List<Hotel> hotels = hotelRepository.findByOwner(user);
+        return hotels
+                .stream()
+                .map(element -> modelMapper.map(element, HotelDto.class))
+                .toList();
     }
 }

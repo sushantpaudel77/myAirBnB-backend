@@ -3,8 +3,12 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
+import com.projects.airbnb.dto.HotelReportDto;
 import com.stripe.model.Event;
 
+import java.nio.file.AccessDeniedException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingService {
@@ -20,4 +24,8 @@ public interface BookingService {
     void cancelBooking(Long bookingId);
 
     String getBookingStatus(Long bookingId);
+
+    List<BookingDto> getAllBookingByHotelId(Long hotelId) throws AccessDeniedException;
+
+    HotelReportDto getHotelReport(Long hotelId, LocalDate startDate, LocalDate endDate);
 }

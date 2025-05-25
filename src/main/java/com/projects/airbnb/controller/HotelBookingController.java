@@ -4,6 +4,7 @@ import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
 import com.projects.airbnb.service.BookingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class HotelBookingController {
     private final BookingService bookingService;
 
     @PostMapping(path = "/init")
-    public ResponseEntity<BookingDto> initializeBooking(@RequestBody BookingRequest bookingRequest) {
+    public ResponseEntity<BookingDto> initializeBooking(@RequestBody @Valid BookingRequest bookingRequest) {
         BookingDto bookingDto = bookingService.initializeBooking(bookingRequest);
         return ResponseEntity.ok(bookingDto);
     }
@@ -38,13 +39,13 @@ public class HotelBookingController {
         return ResponseEntity.ok(Map.of("sessionUrl", sessionUrl));
     }
 
-    @PostMapping(path = "/{bookingId}/cancel")
+    @DeleteMapping(path = "/{bookingId}/cancel")
     public ResponseEntity<Void> cancelBooking(@PathVariable Long bookingId) {
         bookingService.cancelBooking(bookingId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(path = "/{bookingId}/status")
+    @GetMapping(path = "/{bookingId}/status")
     public ResponseEntity<Map<String, String>> getBookingStatus(@PathVariable Long bookingId) {
         String bookingStatus = bookingService.getBookingStatus(bookingId);
         return ResponseEntity.ok(Map.of("status", bookingStatus));
