@@ -1,5 +1,6 @@
 package com.projects.airbnb.advice;
 
+import jakarta.annotation.Nonnull;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -13,16 +14,19 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
 
-
     @Override
-    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+    public boolean supports(@Nonnull MethodParameter returnType,
+                            @Nonnull Class<? extends HttpMessageConverter<?>> converterType) {
         return true;
     }
 
     @Override
-    public Object beforeBodyWrite(Object body, MethodParameter returnType, MediaType selectedContentType,
-                                  Class<? extends HttpMessageConverter<?>> selectedConverterType,
-                                  ServerHttpRequest request, ServerHttpResponse response) {
+    public Object beforeBodyWrite(Object body,
+                                  @Nonnull MethodParameter returnType,
+                                  @Nonnull MediaType selectedContentType,
+                                  @Nonnull Class<? extends HttpMessageConverter<?>> selectedConverterType,
+                                  @Nonnull ServerHttpRequest request,
+                                  @Nonnull ServerHttpResponse response) {
 
         List<String> allowedRoutes = List.of("/v3/api-docs", "/swagger-ui", "/swagger-resources", "/actuator");
 

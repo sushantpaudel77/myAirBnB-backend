@@ -77,7 +77,7 @@ public class CheckOutServiceImpl implements CheckOutService {
 
         } catch (StripeException e) {
             log.error(" Failed to create Stripe session for booking ID: {}", booking.getId(), e);
-            throw new RuntimeException("Stripe session creation failed", e);
+            throw new IllegalStateException("Stripe session creation failed", e);
         }
     }
 }

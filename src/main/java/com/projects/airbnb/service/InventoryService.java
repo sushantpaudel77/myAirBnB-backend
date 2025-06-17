@@ -1,9 +1,11 @@
 package com.projects.airbnb.service;
 
-import com.projects.airbnb.dto.*;
+import com.projects.airbnb.dto.HotelPriceDto;
+import com.projects.airbnb.dto.HotelSearchRequest;
+import com.projects.airbnb.dto.InventoryDto;
+import com.projects.airbnb.dto.UpdateInventoryRequestDto;
 import com.projects.airbnb.entity.Room;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 

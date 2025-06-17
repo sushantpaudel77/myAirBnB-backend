@@ -1,7 +1,6 @@
 package com.projects.airbnb.strategy;
 
 import com.projects.airbnb.entity.Inventory;
-import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 

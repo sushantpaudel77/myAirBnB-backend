@@ -10,8 +10,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-#      ddl-auto: create-drop
+#      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -39,3 +39,4 @@ stripe:
 logging:
   level:
     org.springframework.security: DEBUG
+    com.projects.airbnb: INFO

@@ -5,7 +5,6 @@ import com.projects.airbnb.dto.UserDto;
 import com.projects.airbnb.entity.User;
 
 public interface UserService {
-
     User getUserById(Long id);
 
     void updateProfile(ProfileUpdateRequestDto profileUpdateRequestDto);

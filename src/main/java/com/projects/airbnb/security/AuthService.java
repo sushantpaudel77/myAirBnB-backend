@@ -30,7 +30,7 @@ public class AuthService {
 
     public UserDto signUp(SignUpRequestDto signUpRequestDto) {
 
-        userRepository.findByEmail(signUpRequestDto.getEmail()).ifPresent(user -> {
+       userRepository.findByEmail(signUpRequestDto.getEmail()).ifPresent(user -> {
             throw new ResourceAlreadyExistsException("User is already present with the same email");
         });
 

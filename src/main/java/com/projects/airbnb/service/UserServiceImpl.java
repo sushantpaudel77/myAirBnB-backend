@@ -4,7 +4,6 @@ import com.projects.airbnb.dto.ProfileUpdateRequestDto;
 import com.projects.airbnb.dto.UserDto;
 import com.projects.airbnb.entity.User;
 import com.projects.airbnb.repository.UserRepository;
-import com.projects.airbnb.utility.AppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
