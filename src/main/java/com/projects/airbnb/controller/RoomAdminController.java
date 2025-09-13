@@ -1,7 +1,7 @@
 package com.projects.airbnb.controller;
 
 import com.projects.airbnb.dto.RoomDto;
-import com.projects.airbnb.service.RoomService;
+import com.projects.airbnb.service.impl.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

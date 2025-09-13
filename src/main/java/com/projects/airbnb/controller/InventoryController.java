@@ -2,7 +2,7 @@ package com.projects.airbnb.controller;
 
 import com.projects.airbnb.dto.InventoryDto;
 import com.projects.airbnb.dto.UpdateInventoryRequestDto;
-import com.projects.airbnb.service.InventoryService;
+import com.projects.airbnb.service.impl.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

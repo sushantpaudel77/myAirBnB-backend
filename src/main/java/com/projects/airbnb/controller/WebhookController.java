@@ -1,6 +1,6 @@
 package com.projects.airbnb.controller;
 
-import com.projects.airbnb.service.BookingService;
+import com.projects.airbnb.service.impl.BookingService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;

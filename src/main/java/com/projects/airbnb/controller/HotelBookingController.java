@@ -3,7 +3,7 @@ package com.projects.airbnb.controller;
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
 import com.projects.airbnb.dto.GuestDto;
-import com.projects.airbnb.service.BookingService;
+import com.projects.airbnb.service.impl.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

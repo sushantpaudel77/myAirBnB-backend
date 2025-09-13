@@ -10,6 +10,8 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
+import com.projects.airbnb.service.impl.HotelService;
+import com.projects.airbnb.service.impl.InventoryService;
 import com.projects.airbnb.utility.AppUtils;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;

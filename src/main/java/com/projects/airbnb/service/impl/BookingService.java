@@ -1,4 +1,4 @@
-package com.projects.airbnb.service;
+package com.projects.airbnb.service.impl;
 
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.BookingRequest;
@@ -6,9 +6,7 @@ import com.projects.airbnb.dto.GuestDto;
 import com.projects.airbnb.dto.HotelReportDto;
 import com.stripe.model.Event;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingService {

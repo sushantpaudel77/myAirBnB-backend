@@ -11,6 +11,8 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.RoomUnavailableException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.*;
+import com.projects.airbnb.service.impl.BookingService;
+import com.projects.airbnb.service.impl.CheckOutService;
 import com.projects.airbnb.strategy.PricingService;
 import com.projects.airbnb.utility.AppUtils;
 import com.projects.airbnb.utility.EntityFinder;

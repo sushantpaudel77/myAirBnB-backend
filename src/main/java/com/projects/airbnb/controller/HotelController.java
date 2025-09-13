@@ -3,15 +3,14 @@ package com.projects.airbnb.controller;
 import com.projects.airbnb.dto.BookingDto;
 import com.projects.airbnb.dto.HotelDto;
 import com.projects.airbnb.dto.HotelReportDto;
-import com.projects.airbnb.service.BookingService;
-import com.projects.airbnb.service.HotelService;
+import com.projects.airbnb.service.impl.BookingService;
+import com.projects.airbnb.service.impl.HotelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 

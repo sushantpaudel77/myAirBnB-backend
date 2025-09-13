@@ -1,4 +1,4 @@
-package com.projects.airbnb.service;
+package com.projects.airbnb.service.impl;
 
 
 import com.projects.airbnb.entity.Booking;

@@ -1,6 +1,5 @@
-package com.projects.airbnb.service;
+package com.projects.airbnb.service.impl;
 
-import com.projects.airbnb.dto.HotelDto;
 import com.projects.airbnb.dto.RoomDto;
 
 import java.util.List;

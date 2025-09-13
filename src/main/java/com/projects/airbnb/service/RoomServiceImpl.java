@@ -8,6 +8,8 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.exception.UnAuthorizedException;
 import com.projects.airbnb.repository.HotelRepository;
 import com.projects.airbnb.repository.RoomRepository;
+import com.projects.airbnb.service.impl.InventoryService;
+import com.projects.airbnb.service.impl.RoomService;
 import com.projects.airbnb.utility.EntityFinder;
 import com.projects.airbnb.utility.HotelField;
 import lombok.RequiredArgsConstructor;

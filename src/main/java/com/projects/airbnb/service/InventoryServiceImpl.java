@@ -11,6 +11,7 @@ import com.projects.airbnb.exception.ResourceNotFoundException;
 import com.projects.airbnb.repository.HotelMinPriceRepository;
 import com.projects.airbnb.repository.InventoryRepository;
 import com.projects.airbnb.repository.RoomRepository;
+import com.projects.airbnb.service.impl.InventoryService;
 import com.projects.airbnb.utility.AppUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

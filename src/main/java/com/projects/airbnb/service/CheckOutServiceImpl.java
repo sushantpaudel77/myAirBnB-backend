@@ -3,6 +3,7 @@ package com.projects.airbnb.service;
 import com.projects.airbnb.entity.Booking;
 import com.projects.airbnb.entity.User;
 import com.projects.airbnb.repository.BookingRepository;
+import com.projects.airbnb.service.impl.CheckOutService;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.checkout.Session;

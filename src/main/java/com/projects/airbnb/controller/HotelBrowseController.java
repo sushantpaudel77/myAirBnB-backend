@@ -1,11 +1,10 @@
 package com.projects.airbnb.controller;
 
-import com.projects.airbnb.dto.HotelDto;
 import com.projects.airbnb.dto.HotelInfoDto;
 import com.projects.airbnb.dto.HotelPriceDto;
 import com.projects.airbnb.dto.HotelSearchRequest;
-import com.projects.airbnb.service.HotelService;
-import com.projects.airbnb.service.InventoryService;
+import com.projects.airbnb.service.impl.HotelService;
+import com.projects.airbnb.service.impl.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;

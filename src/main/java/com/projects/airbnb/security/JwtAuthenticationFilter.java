@@ -1,7 +1,7 @@
 package com.projects.airbnb.security;
 
 import com.projects.airbnb.entity.User;
-import com.projects.airbnb.service.UserService;
+import com.projects.airbnb.service.impl.UserService;
 import io.jsonwebtoken.JwtException;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
